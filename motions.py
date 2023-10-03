@@ -4,16 +4,16 @@ import rclpy
 from rclpy.node import Node
 
 from utilities import Logger, euler_from_quaternion
-from rclpy.qos import QoSProfile
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
 # TODO Part 3: Import message types needed: 
     # For sending velocity commands to the robot: Twist
     # For the sensors: Imu, LaserScan, and Odometry
 # Check the online documentation to fill in the lines below
-from ... import Twist
+from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu
-from ... import LaserScan
-from ... import Odometry
+from sensor_msgs.msg import LaserScan
+from nav_msgs.msg import Odometry
 
 from rclpy.time import Time
 
@@ -21,15 +21,17 @@ from rclpy.time import Time
 # import ...
 
 
+
 CIRCLE=0; SPIRAL=1; ACC_LINE=2
 motion_types=['circle', 'spiral', 'line']
 
 class motion_executioner(Node):
-    
+
     def __init__(self, motion_type=0):
         
-        super().__init__("motion_types")
-        
+        super().__init__("motion_types") #makes a Node object
+        self.my_global_var = 0.0
+
         self.type=motion_type
         
         self.radius_=0.0
@@ -40,7 +42,7 @@ class motion_executioner(Node):
         self.laser_initialized=False
         
         # TODO Part 3: Create a publisher to send velocity commands by setting the proper parameters in (...)
-        self.vel_publisher=self.create_publisher(...)
+        self.vel_publisher=self.create_publisher(Twist, "/cmd_vel", 10) # arbitrary 10
                 
         # loggers
         self.imu_logger=Logger('imu_content_'+str(motion_types[motion_type])+'.csv', headers=["acc_x", "acc_y", "angular_z", "stamp"])
@@ -48,20 +50,24 @@ class motion_executioner(Node):
         self.laser_logger=Logger('laser_content_'+str(motion_types[motion_type])+'.csv', headers=["ranges", "stamp"])
         
         # TODO Part 3: Create the QoS profile by setting the proper parameters in (...)
-        qos=QoSProfile(...)
+        #"""  Reliability: RELIABLE
+        #History (Depth): UNKNOWN
+        #Durability: VOLATILE """
+        
+        qos=QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, durability=DurabilityPolicy.VOLATILE, depth=10)
 
         # TODO Part 5: Create below the subscription to the topics corresponding to the respective sensors
         # IMU subscription
-        
-        ...
+        self.create_subscription(Odometry, "/odom", self.odom_callback, qos)
+        #...
         
         # ENCODER subscription
 
-        ...
+        #...
         
         # LaserScan subscription 
         
-        ...
+        #...
         
         self.create_timer(0.1, self.timer_callback)
 
@@ -70,19 +76,24 @@ class motion_executioner(Node):
     # You can save the needed fields into a list, and pass the list to the log_values function in utilities.py
 
     def imu_callback(self, imu_msg: Imu):
-        ...    # log imu msgs
+        #...    # log imu msgs
+        pass
         
     def odom_callback(self, odom_msg: Odometry):
-        
-        ... # log odom msgs
+        print("odom callback activated")
+        odom_list = [odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y]#, odom_msg.pose.pose.position.th]
+        self.odom_logger.log_values(odom_list)
+        # log odom msgs
                 
     def laser_callback(self, laser_msg: LaserScan):
-        
-        ... # log laser msgs with position msg at that time
+        pass
+        #... # log laser msgs with position msg at that time
                 
     def timer_callback(self):
         
-        if self.odom_initialized and self.laser_initialized and self.imu_initialized:
+        print("in timer callback")
+
+        if self.odom_initialized :#and self.laser_initialized and self.imu_initialized:
             self.successful_init=True
             
         if not self.successful_init:
@@ -109,19 +120,29 @@ class motion_executioner(Node):
     # TODO Part 4: Motion functions: complete the functions to generate the proper messages corresponding to the desired motions of the robot
 
     def make_circular_twist(self):
-        
+        print("making a circle")
         msg=Twist()
-        ... # fill up the twist msg for circular motion
+        msg.linear.x = 1.0
+        msg.angular.z = 1.0
+        # fill up the twist msg for circular motion
         return msg
 
     def make_spiral_twist(self):
         msg=Twist()
-        ... # fill up the twist msg for spiral motion
+        msg.linear.x = 0.0 + self.my_global_var
+        if (self.my_global_var < 3):
+            self.my_global_var = self.my_global_var + 0.01
+        msg.angular.z = 1.0
+        # fill up the twist msg for spiral motion
         return msg
     
     def make_acc_line_twist(self):
         msg=Twist()
-        ... # fill up the twist msg for line motion
+        msg.linear.x = 0.0 + self.my_global_var
+        if (self.my_global_var < 3):
+            self.my_global_var = self.my_global_var + 0.01
+        msg.angular.z = 0.0
+         # fill up the twist msg for line motion
         return msg
 
 import argparse
@@ -141,7 +162,8 @@ if __name__=="__main__":
     args = argParser.parse_args()
 
     if args.motion.lower() == "circle":
-
+        #Create the object
+        print("input was a circle")
         ME=motion_executioner(motion_type=CIRCLE)
     elif args.motion.lower() == "line":
         ME=motion_executioner(motion_type=ACC_LINE)
@@ -150,11 +172,12 @@ if __name__=="__main__":
         ME=motion_executioner(motion_type=SPIRAL)
 
     else:
-        print(f"we don't have {arg.motion.lower()} motion type")
+        print(f"we don't have {args.motion.lower()} motion type")
 
 
     
     try:
+        #Start running th eobject
         rclpy.spin(ME)
     except KeyboardInterrupt:
         print("Exiting")

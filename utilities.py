@@ -22,9 +22,9 @@ class Logger:
 
         with open(self.filename, 'a') as file:
             vals_str=""
-
+            for value in values_list:
+                vals_str += str(value) + ','
             # TODO Part 5: Write the values from the list to the file
-            ...
             
             vals_str+="\n"
             
