@@ -30,7 +30,7 @@ class motion_executioner(Node):
     def __init__(self, motion_type=0):
         
         super().__init__("motion_types") #makes a Node object
-        self.my_global_var = 0.0
+        self.speed_inc = 0.0
 
         self.type=motion_type
         
@@ -57,16 +57,16 @@ class motion_executioner(Node):
         qos=QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, durability=DurabilityPolicy.VOLATILE, depth=10)
 
         # TODO Part 5: Create below the subscription to the topics corresponding to the respective sensors
-        # IMU subscription
+        # ENOCODER subscription
         self.create_subscription(Odometry, "/odom", self.odom_callback, qos)
-        #...
         
-        # ENCODER subscription
-
+        
+        # IMU subscription
+        self.create_subscription(Imu, "/imu", self.imu_callback, qos)
         #...
         
         # LaserScan subscription 
-        
+        self.create_subscription(LaserScan, "/scan", self.laser_callback, qos)
         #...
         
         self.create_timer(0.1, self.timer_callback)
@@ -74,31 +74,37 @@ class motion_executioner(Node):
 
     # TODO Part 5: Callback functions: complete the callback functions of the three sensors to log the proper data.
     # You can save the needed fields into a list, and pass the list to the log_values function in utilities.py
-
+    
+    #log imu msgs
     def imu_callback(self, imu_msg: Imu):
-        #...    # log imu msgs
-        pass
+        imu_list = [imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.angular_velocity.z, Time.from_msg(imu_msg.header.stamp).nanoseconds]
+        self.imu_logger.log_values(imu_list)
         
+    # log odom msgs
     def odom_callback(self, odom_msg: Odometry):
-        print("odom callback activated")
-        odom_list = [odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y]#, odom_msg.pose.pose.position.th]
+        yaw = euler_from_quaternion(odom_msg.pose.pose.orientation)
+        odom_list = [odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y, yaw, Time.from_msg(odom_msg.header.stamp).nanoseconds]
         self.odom_logger.log_values(odom_list)
-        # log odom msgs
                 
+    # log laser msgs with position msg at that time
     def laser_callback(self, laser_msg: LaserScan):
-        pass
-        #... # log laser msgs with position msg at that time
+        laser_list = [laser_msg.ranges, Time.from_msg(laser_msg.header.stamp).nanoseconds]
+        self.laser_logger.log_values(laser_list)
                 
     def timer_callback(self):
         
+        '''
         print("in timer callback")
 
-        if self.odom_initialized :#and self.laser_initialized and self.imu_initialized:
+        if self.odom_initialized and self.laser_initialized and self.imu_initialized:
             self.successful_init=True
             
         if not self.successful_init:
             return
         
+        print("in timer callback")
+        '''
+
         cmd_vel_msg=Twist()
         
         if self.type==CIRCLE:
@@ -129,18 +135,18 @@ class motion_executioner(Node):
 
     def make_spiral_twist(self):
         msg=Twist()
-        msg.linear.x = 0.0 + self.my_global_var
-        if (self.my_global_var < 3):
-            self.my_global_var = self.my_global_var + 0.01
+        msg.linear.x = 0.0 + self.speed_inc
+        if (self.speed_inc < 3):
+            self.speed_inc = self.speed_inc + 0.01
         msg.angular.z = 1.0
         # fill up the twist msg for spiral motion
         return msg
     
     def make_acc_line_twist(self):
         msg=Twist()
-        msg.linear.x = 0.0 + self.my_global_var
-        if (self.my_global_var < 3):
-            self.my_global_var = self.my_global_var + 0.01
+        msg.linear.x = 0.0 + self.speed_inc
+        if (self.speed_inc < 3):
+            self.speed_inc = self.speed_inc + 0.01
         msg.angular.z = 0.0
          # fill up the twist msg for line motion
         return msg
