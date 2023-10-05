@@ -24,7 +24,6 @@ class Logger:
             vals_str=""
             for value in values_list:
                 vals_str += str(value) + ','
-            # TODO Part 5: Write the values from the list to the file
             
             vals_str+="\n"
             
@@ -85,7 +84,12 @@ def euler_from_quaternion(quat):
     Convert quaternion (w in last place) to euler roll, pitch, yaw.
     quat = [x, y, z, w]
     """
-    ... # just unpack yaw
+    # just unpack yaw
+    siny_cosp = 2*(quat.w * quat.z + quat.x * quat.y)
+    cosy_cosp = 1 - 2*(quat.y * quat.y + quat.z * quat.z)
+
+    yaw = atan2(siny_cosp, cosy_cosp)
+
     return yaw
 
 
