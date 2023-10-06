@@ -19,7 +19,7 @@ from rclpy.time import Time
 
 # You may add any other imports you may need/want to use below
 # import ...
-
+import numpy as np
 
 
 CIRCLE=0; SPIRAL=1; ACC_LINE=2
@@ -88,7 +88,11 @@ class motion_executioner(Node):
                 
     # log laser msgs with position msg at that time
     def laser_callback(self, laser_msg: LaserScan):
-        laser_list = [laser_msg.ranges, Time.from_msg(laser_msg.header.stamp).nanoseconds]
+        #convert to python array
+        laser_ranges = laser_msg.ranges.tolist()
+
+        laser_list = [laser_msg.angle_min, laser_msg.angle_max, laser_msg.angle_increment, laser_msg.range_min, laser_msg.range_max, Time.from_msg(laser_msg.header.stamp).nanoseconds]
+        laser_list.extend(laser_ranges)
         self.laser_logger.log_values(laser_list)
                 
     def timer_callback(self):
@@ -128,24 +132,24 @@ class motion_executioner(Node):
     def make_circular_twist(self):
         print("making a circle")
         msg=Twist()
-        msg.linear.x = 1.0
-        msg.angular.z = 1.0
+        msg.linear.x = 0.75
+        msg.angular.z = 2.0
         # fill up the twist msg for circular motion
         return msg
 
     def make_spiral_twist(self):
         msg=Twist()
         msg.linear.x = 0.0 + self.speed_inc
-        if (self.speed_inc < 3):
+        if (self.speed_inc < 2.5):
             self.speed_inc = self.speed_inc + 0.01
-        msg.angular.z = 1.0
+        msg.angular.z = 2.0
         # fill up the twist msg for spiral motion
         return msg
     
     def make_acc_line_twist(self):
         msg=Twist()
         msg.linear.x = 0.0 + self.speed_inc
-        if (self.speed_inc < 3):
+        if (self.speed_inc < 69):
             self.speed_inc = self.speed_inc + 0.01
         msg.angular.z = 0.0
          # fill up the twist msg for line motion
