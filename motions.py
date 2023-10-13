@@ -30,7 +30,8 @@ class motion_executioner(Node):
     def __init__(self, motion_type=0):
         
         super().__init__("motion_types") #makes a Node object
-        self.speed_inc = 0.0
+        
+        self.speed_inc = 0.0 #used to implement spiral motion
 
         self.type=motion_type
         
@@ -60,14 +61,11 @@ class motion_executioner(Node):
         # ENOCODER subscription
         self.create_subscription(Odometry, "/odom", self.odom_callback, qos)
         
-        
         # IMU subscription
         self.create_subscription(Imu, "/imu", self.imu_callback, qos)
-        #...
         
         # LaserScan subscription 
         self.create_subscription(LaserScan, "/scan", self.laser_callback, qos)
-        #...
         
         self.create_timer(0.1, self.timer_callback)
 
@@ -77,22 +75,27 @@ class motion_executioner(Node):
     
     #log imu msgs
     def imu_callback(self, imu_msg: Imu):
+        #each IMU data row records the linear acceleration in x and y, the angular velocity, and the current timestamp in nanoseconds
         imu_list = [imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.angular_velocity.z, Time.from_msg(imu_msg.header.stamp).nanoseconds]
         self.imu_logger.log_values(imu_list)
         
     # log odom msgs
     def odom_callback(self, odom_msg: Odometry):
+        #extract z angular orientation (yaw) from the orientation quaternion in odom msg
         yaw = euler_from_quaternion(odom_msg.pose.pose.orientation)
+        #each odom data row records the robot position in x, y, robot orientation, and current timestamp in nanoseconds
         odom_list = [odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y, yaw, Time.from_msg(odom_msg.header.stamp).nanoseconds]
         self.odom_logger.log_values(odom_list)
                 
     # log laser msgs with position msg at that time
     def laser_callback(self, laser_msg: LaserScan):
-        #convert to python array
+        #convert list of laser scan range readings to python array
         laser_ranges = laser_msg.ranges.tolist()
-
+        #record angle min, angle max, angle inc, range min, range max, and time stamp info in each row of data for easy post processing
         laser_list = [laser_msg.angle_min, laser_msg.angle_max, laser_msg.angle_increment, laser_msg.range_min, laser_msg.range_max, Time.from_msg(laser_msg.header.stamp).nanoseconds]
+        #append the list of range readings to the current row with current timestamp
         laser_list.extend(laser_ranges)
+        #call logger log values function to record one row of data
         self.laser_logger.log_values(laser_list)
                 
     def timer_callback(self):
@@ -129,30 +132,49 @@ class motion_executioner(Node):
     
     # TODO Part 4: Motion functions: complete the functions to generate the proper messages corresponding to the desired motions of the robot
 
+    #returns a Twist msg that contains information for circular motion
     def make_circular_twist(self):
         print("making a circle")
         msg=Twist()
+        #constant linear speed
         msg.linear.x = 0.75
+        #constant angular velocity
         msg.angular.z = 2.0
-        # fill up the twist msg for circular motion
+
+        # v = r * w. Constant linear speed v and constant angular velocity w --> constant radius r of robot's motion
         return msg
 
+    #returns a Twist msg that contains information for spiral motion
     def make_spiral_twist(self):
         msg=Twist()
+
+        #start with a linear velocity of 0, and slowly increment it each time this function is called
         msg.linear.x = 0.0 + self.speed_inc
+        #cap on speed increment value to prevent huge acceleration and saturation in robot's motors
         if (self.speed_inc < 2.5):
             self.speed_inc = self.speed_inc + 0.01
+
+        #constant angular velocity
         msg.angular.z = 2.0
-        # fill up the twist msg for spiral motion
+        
+        # v = r * w. Robot's linear speed v keeps increasing while angular velocity w stays the same 
+        # --> radius r of robot's motion keeps increasing --> spiral motion
         return msg
     
+    #returns a Twist msg that contains information for accelerating line motion
     def make_acc_line_twist(self):
         msg=Twist()
+        
+        #start with a linear velocity of 0, and slowly increment it each time this function is called
+        #slowly incrementing speed so acceleration data can be visible for longer duration in data plots
         msg.linear.x = 0.0 + self.speed_inc
-        if (self.speed_inc < 69):
+        #cap on speed increment value to prevent huge acceleration and saturation in robot's motors
+        if (self.speed_inc < 2.5):
             self.speed_inc = self.speed_inc + 0.01
+
+        #no angular velocity --> robot goes straight for line motion
         msg.angular.z = 0.0
-         # fill up the twist msg for line motion
+        # fill up the twist msg for line motion
         return msg
 
 import argparse
