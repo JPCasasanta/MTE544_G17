@@ -28,23 +28,41 @@ class planner:
     # TODO Part 6: Implement the trajectories here
     def trajectory_planner(self, current_pose):
         # the return should be a list of trajectory points: [ [x1,y1], ..., [xn,yn]]
-        mode = 'sigmoid'
+        mode = 'x^2'
         if mode ==  'x^2':
-                num_points = 10
-                x_inc = 0.1
-                trajectory_points = []
+            x_start = 0
+            x_end = 2
+            y_start = x_start * x_start
 
-                #starting x
-                x = 0
+            increment = 0.1
 
-                for i in range(num_points):
-                    y = x*x
-                    trajectory_points.append([x, y])
-                    x += x_inc
+            trajectory_points = []
+            trajectory_points_int = []
+
+            #starting x
+            x = x_start
+
+            while (x <= x_end):
+                y = (x-1)*(x-1) - 1
+                trajectory_points_int.append([x, y])
+                x += increment
+
+            start_slope = -2
+            #Rotate frame 90 degrees so we start with a good orientation
+            start_angle = math.pi/2 #-1*math.atan2(start_slope, 1) 
+
+            for point in trajectory_points_int:
+            
+                x_transformed = (point[0] * math.cos(start_angle)) - (point[1] * math.sin(start_angle))
+                y_transformed = (point[1] * math.cos(start_angle)) + (point[0] * math.sin(start_angle))
+                trajectory_points.append([x_transformed, y_transformed])            
+
+
+#            trajectory_points = trajectory_points_int
 
         if mode == 'sigmoid':
-            x_start = -50
-            x_end = 1
+            x_start = 0
+            x_end = 2.5
 
             increment = 0.1
 
@@ -52,7 +70,7 @@ class planner:
 
             x = x_start
             while (x <= x_end):
-                y = 1 / (1 + math.exp(-10 * x))
+                y = 1 / (1 + math.exp(-5 * (x-1)))
 
                 trajectory_points.append([x, y])
 

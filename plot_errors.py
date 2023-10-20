@@ -23,6 +23,8 @@ def plot_errors(filename):
     axes[0].plot([lin[0] for lin in values], [lin[1] for lin in values])
     axes[0].set_title("state space")
     axes[0].grid()
+    axes[0].set_xlabel("X")
+    axes[0].set_ylabel("Y")
 
     
     axes[1].set_title("each individual state")
@@ -31,7 +33,7 @@ def plot_errors(filename):
 
     axes[1].legend()
     axes[1].grid()
-
+    axes[1].set_xlabel("Time (ns)")
     plt.show()
     
     
@@ -46,6 +48,7 @@ if __name__=="__main__":
 
     parser = argparse.ArgumentParser(description='Process some files.')
     parser.add_argument('--files', nargs='+', required=True, help='List of files to process')
+    #parser.add_argument('--title', nargs=1, required=True)
     
     args = parser.parse_args()
     

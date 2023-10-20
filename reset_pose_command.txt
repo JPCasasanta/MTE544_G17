@@ -1,0 +1,13 @@
+ros2 service call /reset_pose irobot_create_msgs/srv/ResetPose {}
+
+
+            start_slope = -2
+            start_angle = math.atan2(start_slope, 1)
+
+            for point in trajectory_points_int:
+            
+                x_transformed = (point[0] * math.cos(start_angle)) - (point[1] * math.sin(start_angle))
+                y_transformed = (point[1] * math.cos(start_angle)) + (point[0] * math.sin(start_angle))
+                trajectory_points.append([x_transformed, y_transformed])
+
+

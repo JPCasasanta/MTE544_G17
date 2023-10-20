@@ -38,7 +38,7 @@ class controller:
         angular_vel= -MAX_ANG_VEL if angular_vel < -MAX_ANG_VEL else angular_vel
 
         print("linear vel is ", linear_vel)
-        print("angular vel is ", linear_vel)
+        print("angular vel is ", angular_vel)
 
         return linear_vel, angular_vel
     
