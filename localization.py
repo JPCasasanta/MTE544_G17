@@ -47,13 +47,13 @@ class localization(Node):
         
         # TODO Part 3: Set up the quantities for the EKF (hint: you will need the functions for the states and measurements)
         
-        x= ...
+        x= [0, 0, 0, 0, 0, 0] #initially at rest
         
-        Q= ...
+        Q= 0.5*np.identity(6)
 
-        R= ...
+        R= 0.5*np.identity(4)
         
-        P= ... # initial covariance
+        P= np.ones(6, 6) # initial covariance, choose all 1s for simplicity
         
         self.kf=kalman_filter(P,Q,R, x, dt)
         
@@ -81,10 +81,10 @@ class localization(Node):
         xhat=self.kf.get_states()
 
         # Update the pose estimate to be returned by getPose
-        self.pose=np.array(...)
+        self.pose=np.array(xhat[0], xhat[1], xhat[2], odom_msg.header.stamp) #x, y, th from xhat
 
-        # TODO Part 4: log your data
-        self.loc_logger.log_values(...)
+        # TODO Part 4: log your data                                                               kf_ax  kf_ay             kf_vx      kf_w      x         y
+        self.loc_logger.log_values([imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, xhat[5], xhat[4]*xhat[3], xhat[4], xhat[3], xhat[0], xhat[1], Time.from_msg(odom_msg.header.stamp).nanoseconds])
       
     def odom_callback(self, pose_msg):
         
