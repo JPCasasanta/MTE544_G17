@@ -8,7 +8,7 @@ from utilities import euler_from_quaternion, calculate_angular_error, calculate_
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 
-from rclpy.qos import QoSProfile
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 from nav_msgs.msg import Odometry as odom
 
 from sensor_msgs.msg import Imu
@@ -21,11 +21,11 @@ import message_filters
 
 rawSensors=0
 kalmanFilter=1
-odom_qos=QoSProfile(reliability=2, durability=2, history=1, depth=10)
+odom_qos=QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, durability=DurabilityPolicy.VOLATILE, history=1, depth=10)
 
 class localization(Node):
     
-    def __init__(self, type, dt, loggerName="robotPose.csv", loggerHeaders=["imu_ax", "imu_ay", "kf_ax", "kf_ay","kf_vx","kf_w","kf_x", "kf_y","stamp"]):
+    def __init__(self, type, dt, loggerName="robotPose.csv", loggerHeaders=["imu_ax", "imu_ay", "kf_ax", "kf_ay","kf_vx","kf_w","kf_x", "kf_y", "v", "w", "stamp"]):
 
         super().__init__("localizer")
 
@@ -49,17 +49,25 @@ class localization(Node):
         
         x= [0, 0, 0, 0, 0, 0] #initially at rest
         
-        Q= 0.5*np.identity(6)
+        Q= np.array([[0.5, 0, 0, 0, 0, 0], #x
+                      [0, 0.5, 0, 0, 0, 0], #y
+                      [0, 0, 0.5, 0, 0, 0], #th
+                      [0, 0, 0, 0.1, 0, 0], #w
+                      [0, 0, 0, 0, 0.1, 0], #v
+                      [0, 0, 0, 0, 0, 0.05]])#vdot
 
-        R= 0.5*np.identity(4)
+        R= np.array([[0.01, 0, 0, 0], #v
+                      [0, 0.1, 0, 0], #w
+                      [0, 0, 0.5, 0], #ax
+                      [0, 0, 0, 0.5]])#ay
         
-        P= np.ones((6, 6)) # initial covariance, choose all 1s for simplicity
+        P= np.zeros((6, 6)) # initial covariance, choose all 1s for simplicity
         
         self.kf=kalman_filter(P,Q,R, x, dt)
         
         # TODO Part 3: Use the odometry and IMU data for the EKF
-        self.odom_sub=message_filters.Subscriber(self, odom, "/odom") #DOUBLE CHECK CALL BACK
-        self.imu_sub=message_filters.Subscriber(self, Imu, "/imu")
+        self.odom_sub=message_filters.Subscriber(self, odom, "/odom", qos_profile=odom_qos) #DOUBLE CHECK CALL BACK
+        self.imu_sub=message_filters.Subscriber(self, Imu, "/imu", qos_profile=odom_qos)
         
         time_syncher=message_filters.ApproximateTimeSynchronizer([self.odom_sub, self.imu_sub], queue_size=10, slop=0.1)
         time_syncher.registerCallback(self.fusion_callback)
@@ -84,8 +92,8 @@ class localization(Node):
         # Update the pose estimate to be returned by getPose
         self.pose=np.array([xhat[0], xhat[1], xhat[2], odom_msg.header.stamp]) #x, y, th from xhat
 
-        # TODO Part 4: log your data                                                               kf_ax  kf_ay             kf_vx      kf_w      x         y
-        self.loc_logger.log_values([imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, xhat[5], xhat[4]*xhat[3], xhat[4], xhat[3], xhat[0], xhat[1], Time.from_msg(odom_msg.header.stamp).nanoseconds])
+        # TODO Part 4: log your data                                                               kf_ax  kf_ay             kf_vx      kf_w      x         y    v       w
+        self.loc_logger.log_values([imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, xhat[5], xhat[4]*xhat[3], xhat[4], xhat[3], xhat[0], xhat[1], z[0], z[1], Time.from_msg(odom_msg.header.stamp).nanoseconds])
       
     def odom_callback(self, pose_msg):
         

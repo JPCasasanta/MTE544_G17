@@ -20,7 +20,7 @@ def plot_errors(filename):
     fig, axes = plt.subplots(2,1, figsize=(14,6))
 
 
-    axes[0].plot([lin[len(headers) - 3] for lin in values], [lin[len(headers) - 2] for lin in values])
+    axes[0].plot([lin[len(headers) - 5] for lin in values], [lin[len(headers) - 4] for lin in values])
     axes[0].set_title("state space")
     axes[0].grid()
 
@@ -34,7 +34,46 @@ def plot_errors(filename):
 
     plt.show()
     
+    fig, axes = plt.subplots(2,1, figsize=(14,6))
+
+    axes[0].set_title("a_x Comparison")
+    axes[0].plot(time_list, [lin[0] for lin in values], label= headers[0])
+    axes[0].plot(time_list, [lin[2] for lin in values], label= headers[2])
+    axes[0].legend()
+    axes[0].grid()
+
+
     
+    axes[1].set_title("a_y Comparison")
+    axes[1].plot(time_list, [lin[1] for lin in values], label= headers[1])
+    axes[1].plot(time_list, [lin[3] for lin in values], label= headers[3])
+    axes[1].legend()
+    axes[1].grid()
+
+    plt.show()
+
+
+    fig, axes = plt.subplots(2,1, figsize=(14,6))
+
+
+    axes[0].set_title("w Comparison")
+    axes[0].plot(time_list, [lin[5] for lin in values], label= headers[5])
+    axes[0].plot(time_list, [lin[9] for lin in values], label= headers[9])
+    axes[0].legend()
+    axes[0].grid()
+
+
+
+    axes[1].set_title("v Comparison")
+    axes[1].plot(time_list, [lin[4] for lin in values], label= headers[4])
+    axes[1].plot(time_list, [lin[8] for lin in values], label= headers[8])
+    axes[1].legend()
+    axes[1].grid()
+
+
+    plt.show()
+
+
 
 
 
