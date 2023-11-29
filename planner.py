@@ -1,6 +1,7 @@
 
 from mapUtilities import *
 from a_star import *
+from rclpy import init, spin_once
 
 POINT_PLANNER=0; TRAJECTORY_PLANNER=1
 
@@ -31,13 +32,13 @@ class planner:
         # TODO PART 5 Create the cost-map, the laser_sig is 
         # the standard deviation for the gausiian for which
         # the mean is located on the occupant grid. 
-        self.m_utilites=mapManipulator(laser_sig=...)
+        self.m_utilites=mapManipulator(laser_sig=0.01) #bruh
             
         self.costMap=self.m_utilites.make_likelihood_field()
         
 
     def trajectory_planner(self, startPoseCart, endPoseCart):
-
+        print("In trajectory planner")
 
         # This is to convert the cartesian coordinates into the 
         # the pixel coordinates of the map image, remmember,
@@ -47,23 +48,43 @@ class planner:
         startPose=self.m_utilites.position_2_cell(startPoseCart)
         endPose=self.m_utilites.position_2_cell(endPoseCart)
         
+        #Call A*
+        pixelPath = search(self.costMap, startPose, endPose)
+
         # TODO PART 5 convert the cell pixels into the cartesian coordinates
         
-        Path = list(map(...))
+        Path = list(map(self.m_utilites.cell_2_position, pixelPath))
 
+        import matplotlib.pyplot as plt
+        x_points = []
+        y_points = []
+        for point in Path:
+            x_points.append(point[0])
+            y_points.append(point[1])
 
+        plt.plot(x_points, y_points)
+        plt.show()
 
         # TODO PART 5 return the path as list of [x,y]
-        return ...
+        return Path
 
 
 
 
 if __name__=="__main__":
 
+    init()
+    print("past init")
     m_utilites=mapManipulator()
-    
+    print("made m_utilities")
     map_likelihood=m_utilites.make_likelihood_field()
+    print("made liklihood field")
+
+    PLANNER = planner(TRAJECTORY_PLANNER)
+    PLANNER.plan([0,0], [1, 1])
+
+    #spin_once(m_utilites)
+    #print("spun")
 
     # you can use this part of the code to test your 
     # search algorithm regardless of the ros2 hassles
