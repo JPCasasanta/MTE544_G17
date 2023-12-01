@@ -49,7 +49,11 @@ def manhatten_heuristic(current_position, end_position):
 
 
 def euclidean_heuristic(current_position, end_position):
-    return sqrt(pow(end_position[0] - current_position[0], 2) + pow(end_position[1] - current_position[1], 2))
+    zero_cord = end_position[0] - current_position[0]
+    one_cord = end_position[1] - current_position[1]
+    return sqrt(zero_cord*zero_cord + one_cord*one_cord)
+
+    #return sqrt(pow(end_position[0] - current_position[0], 2) + pow(end_position[1] - current_position[1], 2))
 
 
 def search(maze, start, end):
@@ -71,7 +75,7 @@ def search(maze, start, end):
     # TODO PART 4 Create start and end node with initized values for g, h and f
     start_node = Node(parent=None, position=start)
     start_node.g = 0
-    start_node.h = manhatten_heuristic(current_position=start, end_position=end)
+    start_node.h = euclidean_heuristic(current_position=start, end_position=end)
     start_node.f = start_node.g + start_node.h
 
     
@@ -197,7 +201,7 @@ def search(maze, start, end):
             # TODO PART 4 Create the f, g, and h values
             child.g = child.parent.g + euclidean_heuristic(current_position=child.parent.position, end_position=child.position)
             ## Heuristic costs calculated here, this is using eucledian distance
-            child.h = manhatten_heuristic(current_position=child.position, end_position=end_node.position)
+            child.h = euclidean_heuristic(current_position=child.position, end_position=end_node.position)
 
             child.f = child.g + child.h
 

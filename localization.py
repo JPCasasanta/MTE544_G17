@@ -29,7 +29,7 @@ odom_qos=QoSProfile(reliability=2, durability=2, history=1, depth=10)
 
 class localization(Node):
     
-    #def __init__(self, type, loggerName="robotPose.csv", loggerHeaders=["imu_ax", "imu_ay", "kf_ax", "kf_ay","kf_vx","kf_w","kf_x", "kf_y","stamp"]):
+    #def __init__(self, type, loggerName="robotPose.csv", loggerHeaders=["imu_ax", "imu_ay", "kf_ax", "kf_ay","kf_vx","kf_w","kf_x", "kf_y", "v", "w", "stamp"]):
     
     def __init__(self, type, loggerName="robotPose.csv", loggerHeaders=["x", "y", "theta","stamp"]):
 
@@ -40,7 +40,7 @@ class localization(Node):
         self.pose=None
         
         if type==rawSensors:
-            self.initRawSensors();
+            self.initRawSensors()
         elif type==kalmanFilter:
             self.initKalmanfilter()
             self.kalmanInitialized = False
@@ -75,9 +75,9 @@ class localization(Node):
             
             # TODO PART 5 Bonus put the Q and R matrices
             # that you conclude from lab Three
-            Q= np.array([[0.5, 0, 0, 0, 0, 0], #x
-                        [0, 0.5, 0, 0, 0, 0], #y
-                        [0, 0, 0.5, 0, 0, 0], #th
+            Q= np.array([[0.1, 0, 0, 0, 0, 0], #x
+                        [0, 0.1, 0, 0, 0, 0], #y
+                        [0, 0, 0.1, 0, 0, 0], #th
                         [0, 0, 0, 0.1, 0, 0], #w
                         [0, 0, 0, 0, 0.1, 0], #v
                         [0, 0, 0, 0, 0, 0.05]])#vdot
@@ -113,6 +113,10 @@ class localization(Node):
                             xhat[1],
                             normalize_angle(xhat[2]),
                             odom_msg.header.stamp])
+        
+        # TODO Part 4: log your data                                                               kf_ax  kf_ay             kf_vx      kf_w      x         y    v       w
+        #self.loc_logger.log_values([imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, xhat[5], xhat[4]*xhat[3], xhat[4], xhat[3], xhat[0], xhat[1], z[0], z[1], Time.from_msg(odom_msg.header.stamp).nanoseconds])
+      
         
     def odom_callback(self, pose_msg):
         
