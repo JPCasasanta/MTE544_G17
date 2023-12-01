@@ -3,7 +3,7 @@ from utilities import FileReader
 
 def plot_errors():
     
-    headers, values=FileReader("robot_pose.csv").read_file()
+    headers, values=FileReader("robotPose.csv").read_file()
 
     
     time_list=[]
@@ -13,13 +13,19 @@ def plot_errors():
     for val in values:
         time_list.append(val[-1] - first_stamp)
 
+    fig, axes = plt.subplots(2,1, figsize=(14,6))
 
 
-    for i in range(0, len(headers) - 1):
-        plt.plot(time_list, [lin[i] for lin in values], label= headers[i]+ " linear")
+    axes[0].plot([lin[0] for lin in values], [lin[1] for lin in values])
+    axes[0].set_title("state space")
+    axes[0].grid()
 
-    plt.legend()
-    plt.grid()
+
+    for i in range(0, len(headers) -1):
+        axes[1].plot(time_list, [lin[i] for lin in values], label= headers[i])
+
+    axes[1].legend()
+    axes[1].grid()
 
     plt.show()
     
