@@ -93,7 +93,7 @@ if __name__=="__main__":
     print("made liklihood field")
 
     PLANNER = planner(TRAJECTORY_PLANNER)
-    PLANNER.plan([0,0], [1, 1])
+    PLANNER.plan([0,0], [5, 1.7])
 
     #spin_once(m_utilites)
     #print("spun")
