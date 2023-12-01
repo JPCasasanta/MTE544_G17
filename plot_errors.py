@@ -20,7 +20,7 @@ def plot_errors(filename):
     fig, axes = plt.subplots(2,1, figsize=(14,6))
 
 
-    axes[0].plot([lin[len(headers) - 5] for lin in values], [lin[len(headers) - 4] for lin in values])
+    axes[0].plot([lin[len(headers) - 7] for lin in values], [lin[len(headers) - 6] for lin in values])
     axes[0].set_title("state space")
     axes[0].grid()
 
@@ -72,6 +72,35 @@ def plot_errors(filename):
 
 
     plt.show()
+
+    fig, axes = plt.subplots(2,1, figsize=(14,6))
+
+    axes[0].set_title("x Comparison")
+    axes[0].plot(time_list, [lin[6] for lin in values], label= headers[6])
+    axes[0].plot(time_list, [lin[10] for lin in values], label= headers[10])
+    axes[0].legend()
+    axes[0].grid()
+
+    axes[1].set_title("y Comparison")
+    axes[1].plot(time_list, [lin[7] for lin in values], label= headers[7])
+    axes[1].plot(time_list, [lin[11] for lin in values], label= headers[11])
+    axes[1].legend()
+    axes[1].grid()
+
+
+    plt.show()
+
+    #fig, axes = plt.subplots(2,1, figsize=(14,6))
+
+
+    plt.plot([lin[10] for lin in values], [lin[11] for lin in values], label = "sensor_x-y")
+    plt.plot([lin[7] for lin in values], [lin[7] for lin in values], label = "kf_x-y")
+    plt.set_title("state space Comparison")
+    plt.grid()
+
+    plt.show()
+
+
 
 
 
